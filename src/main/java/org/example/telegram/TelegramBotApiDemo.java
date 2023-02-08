@@ -3,9 +3,11 @@ package org.example.telegram;
 import com.google.zxing.*;
 import com.google.zxing.client.j2se.BufferedImageLuminanceSource;
 import com.google.zxing.common.HybridBinarizer;
+import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel;
 import org.example.interfaces.impl.UserServiceImpl;
 import org.example.model.BotState;
 import org.example.model.User;
+import org.example.operations.GenerateQrCodes;
 import org.example.operations.Operations;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.GetFile;
@@ -19,10 +21,9 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.Comparator;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 import static org.example.operations.GenerateQrCodes.createQRImage;
 
@@ -90,31 +91,20 @@ public class TelegramBotApiDemo extends TelegramLongPollingBot {
                 photo.sort(Comparator.comparing(PhotoSize::getFileSize).reversed());
                 PhotoSize photoSize = photo.get(0);
                 GetFile getFile = new GetFile(photoSize.getFileId());
-                UUID uuid;
                 try {
                     org.telegram.telegrambots.meta.api.objects.File file = execute(getFile);
-                    uuid = UUID.randomUUID();
-                    java.io.File file1 = new java.io.File("src/main/resources/file_" + uuid + "." + file.getFilePath().split("\\.")[1]);
+                    java.io.File file1 = new java.io.File("src/main/resources"+id+"." + file.getFilePath().split("\\.")[1]);
                     downloadFile(file, file1);
-                    File fileobj = new File("src/main/resources/file_" + uuid + "." + file.getFilePath());
-                    BufferedImage bfrdImgobj = null;
-                    try {
-                        bfrdImgobj = ImageIO.read(fileobj);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                    LuminanceSource source = new BufferedImageLuminanceSource(bfrdImgobj);
-                    BinaryBitmap binarybitmapobj = new BinaryBitmap(new HybridBinarizer(source));
-
-                    try {
-                        Result resultobj = new MultiFormatReader().decode(binarybitmapobj);
-                        sendMessage(resultobj);
-                    } catch (NotFoundException e) {
-                        e.printStackTrace();
-                    }
-
-                } catch (TelegramApiException e) {
-                    throw new RuntimeException(e);
+                    String charset = "UTF-8";
+                    Map<EncodeHintType, ErrorCorrectionLevel> hintMap = new HashMap<EncodeHintType, ErrorCorrectionLevel>();
+                    hintMap.put(EncodeHintType.ERROR_CORRECTION, ErrorCorrectionLevel.L);
+                    String s = GenerateQrCodes.readQRCode(file1.getPath(), charset, hintMap);
+                    SendMessage sendMessage = new SendMessage();
+                    sendMessage.setChatId(message.getChatId());
+                    sendMessage.setText(s);
+                    execute(sendMessage);
+                } catch (TelegramApiException | NotFoundException | IOException e) {
+                    e.printStackTrace();
                 }
 
                 sendMessage(UserServiceImpl.getInstance().openUserMenu(message));
