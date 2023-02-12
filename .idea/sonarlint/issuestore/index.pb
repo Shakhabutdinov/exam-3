@@ -14,3 +14,5 @@ e
 5src/main/java/org/example/interfaces/UserService.java,d\3\d35f8c8991ab81b4c69e8704c8c7ed1fefa97e65
 n
 >src/main/java/org/example/interfaces/impl/UserServiceImpl.java,0\5\05e7b0f0efcf99cbf8806e900f6b3bf22029a08d
+i
+9src/main/java/org/example/operations/GenerateQrCodes.java,0\8\08827a56773addcb9239ef05e4c632b4aa410fb7

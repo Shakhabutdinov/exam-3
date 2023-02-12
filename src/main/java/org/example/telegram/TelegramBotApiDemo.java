@@ -1,8 +1,8 @@
 package org.example.telegram;
 
-import com.google.zxing.*;
-import com.google.zxing.client.j2se.BufferedImageLuminanceSource;
-import com.google.zxing.common.HybridBinarizer;
+import com.google.zxing.EncodeHintType;
+import com.google.zxing.NotFoundException;
+import com.google.zxing.WriterException;
 import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel;
 import org.example.interfaces.impl.UserServiceImpl;
 import org.example.model.BotState;
@@ -18,12 +18,12 @@ import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageTe
 import org.telegram.telegrambots.meta.api.objects.*;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
-import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.*;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import static org.example.operations.GenerateQrCodes.createQRImage;
 
@@ -66,7 +66,7 @@ public class TelegramBotApiDemo extends TelegramLongPollingBot {
                 }
             } else if (user.getBotState().equals(BotState.GENERATE_QR_CODE)) {
                 String qrCodeText = update.getMessage().getText();
-                String filePath = PATH+id+".png";
+                String filePath = PATH + id + ".png";
                 int size = 125;
                 String fileType = "png";
                 File qrFile = new File(filePath);
@@ -75,10 +75,10 @@ public class TelegramBotApiDemo extends TelegramLongPollingBot {
                 } catch (WriterException | IOException e) {
                     e.printStackTrace();
                 }
-                Operations.updateUserState(message.getChatId().toString(),BotState.MAIN_MENU);
-               SendPhoto sendPhoto = new SendPhoto();
+                Operations.updateUserState(message.getChatId().toString(), BotState.MAIN_MENU);
+                SendPhoto sendPhoto = new SendPhoto();
                 sendPhoto.setChatId(message.getChatId().toString());
-                File file = new File(PATH+id+".png");
+                File file = new File(PATH + id + ".png");
                 sendPhoto.setPhoto(new InputFile(file));
                 try {
                     execute(sendPhoto);
@@ -87,13 +87,13 @@ public class TelegramBotApiDemo extends TelegramLongPollingBot {
                 }
                 id++;
                 sendMessage(UserServiceImpl.getInstance().openUserMenu(message));
-            }else if (photo != null && !photo.isEmpty()&&user.getBotState().equals(BotState.READ_QRCODE)) {
+            } else if (photo != null && !photo.isEmpty() && user.getBotState().equals(BotState.READ_QRCODE)) {
                 photo.sort(Comparator.comparing(PhotoSize::getFileSize).reversed());
                 PhotoSize photoSize = photo.get(0);
                 GetFile getFile = new GetFile(photoSize.getFileId());
                 try {
                     org.telegram.telegrambots.meta.api.objects.File file = execute(getFile);
-                    java.io.File file1 = new java.io.File("src/main/resources"+id+"." + file.getFilePath().split("\\.")[1]);
+                    java.io.File file1 = new java.io.File("src/main/resources" + id + "." + file.getFilePath().split("\\.")[1]);
                     downloadFile(file, file1);
                     String charset = "UTF-8";
                     Map<EncodeHintType, ErrorCorrectionLevel> hintMap = new HashMap<EncodeHintType, ErrorCorrectionLevel>();
